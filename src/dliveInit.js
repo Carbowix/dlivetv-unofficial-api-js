@@ -66,7 +66,7 @@ class DliveInit extends dlive {
     if (!message) {
       return new Error('Message was not specified')
     }
-    let postData = JSON.stringify({
+    const postData = JSON.stringify({
       operationName: 'SendStreamChatMessage',
       query: `mutation SendStreamChatMessage($input: SendStreamchatMessageInput!) {
                 sendStreamchatMessage(input: $input) {
@@ -133,7 +133,7 @@ class DliveInit extends dlive {
       return new TypeError('Message was not specified')
     }
 
-    let postData = JSON.stringify({
+    const postData = JSON.stringify({
       operationName: 'SendStreamChatMessage',
       query: `mutation SendStreamChatMessage($input: SendStreamchatMessageInput!) {
                 sendStreamchatMessage(input: $input) {
@@ -192,7 +192,7 @@ class DliveInit extends dlive {
       return new TypeError('Channel name was not provided')
     }
     let _this = this
-    let postData = JSON.stringify({
+    const postData = JSON.stringify({
       'operationName': 'LivestreamPage',
       'variables': {
         'displayname': displayName,
@@ -213,7 +213,7 @@ class DliveInit extends dlive {
     if (!displayName) {
       return new TypeError('Channel name was not provided')
     }
-    let postData = JSON.stringify({
+    const postData = JSON.stringify({
       'operationName': 'LivestreamPage',
       'variables': {
         'displayname': displayName,
@@ -242,8 +242,46 @@ class DliveInit extends dlive {
     })
   }
 
+  getChannelFollowersByDisplayName (displayName, amountToShow) {
+    if (!displayName) {
+      return new TypeError('Channel name was not provided')
+    }
+    return new Promise((resolve, reject) => {
+      this.getChannelInformationByDisplayName(displayName).then((res) => {
+        console.log(res)
+        if (res && res.getChannelInformationByDisplayName !== null) {
+          const postData = JSON.stringify({
+            'operationName': 'LivestreamProfileFollowers',
+            'variables': {
+              'displayname': displayName,
+              'sortedBy': 'AZ',
+              'first': amountToShow,
+              'isLoggedIn': true
+            },
+            'query': 'query LivestreamProfileFollowers($displayname: String!, $sortedBy: RelationSortOrder, $first: Int, $after: String, $isLoggedIn: Boolean!) {\n userByDisplayName(displayname: $displayname) {\n id\n displayname\n followers(sortedBy: $sortedBy, first: $first, after: $after) {\n pageInfo {\n endCursor\n hasNextPage\n __typename\n }\n list {\n ...VDliveAvatarFrag\n ...VDliveNameFrag\n ...VFollowFrag\n __typename\n }\n __typename\n }\n __typename\n }\n}\n\nfragment VDliveAvatarFrag on User {\n avatar\n __typename\n}\n\nfragment VDliveNameFrag on User {\n displayname\n partnerStatus\n __typename\n}\n\nfragment VFollowFrag on User {\n id\n username\n displayname\n isFollowing @include(if: $isLoggedIn)\n isMe @include(if: $isLoggedIn)\n followers {\n totalCount\n __typename\n }\n __typename\n}\n'
+          })
+          this.request(this.getAuthkey, postData).then((result) => {
+            result = JSON.parse(result)
+            if (result.data.userByDisplayName.followers) {
+              const followers = result.data.userByDisplayName.followers.list
+              if (followers.length > 0) {
+                resolve(followers)
+              } else {
+                resolve('No followers for the following streamer')
+              }
+            } else {
+              reject(new Error(result.errors['0'].message))
+            }
+          })
+        } else {
+          reject(new Error(res.errors['0'].message))
+        }
+      })
+    })
+  }
+
   getDliveGlobalInformation () {
-    let postData = JSON.stringify({
+    const postData = JSON.stringify({
       'operationName': 'GlobalInformation',
       'variables': {},
       'query': 'query GlobalInformation {\n  globalInfo {\n    languages {\n      id\n      backendID\n      language\n      code\n      __typename\n    }\n    __typename\n  }\n}\n'
@@ -261,46 +299,47 @@ class DliveInit extends dlive {
     if (!streamRules.includes(rule.toUpperCase())) {
       return new Error(`Invalid rule! Use one of the following rules: ${streamRules.map(r => r).join(' || ')}`)
     }
-
-    if (this.getChannelInformationByDisplayName(displayName).then((result) => {
-      if (result.livestream !== null) {
-        let postData = JSON.stringify({
-          'operationName': 'TopContributors',
-          'variables': {
-            'displayname': displayName,
-            'first': amountToShow,
-            'rule': rule,
-            'queryStream': true
-          },
-          'query': 'query TopContributors($displayname: String!, $rule: ContributionSummaryRule, $first: Int, $after: String, $queryStream: Boolean!) {\n  userByDisplayName(displayname: $displayname) {\n    id\n    ...TopContributorsOfStreamerFrag @skip(if: $queryStream)\n    livestream @include(if: $queryStream) {\n      ...TopContributorsOfLivestreamFrag\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment TopContributorsOfStreamerFrag on User {\n  id\n  topContributions(rule: $rule, first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment VDliveNameFrag on User {\n  displayname\n  partnerStatus\n  __typename\n}\n\nfragment VDliveAvatarFrag on User {\n  avatar\n  __typename\n}\n\nfragment TopContributorsOfLivestreamFrag on Livestream {\n  id\n  topContributions(first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n'
-        })
-
-        return new Promise((resolve, reject) => {
-          this.request(this.getAuthkey, postData).then((result) => {
-            result = JSON.parse(result)
-            result.errors !== undefined ? reject(result.errors['0'].message) : resolve(result.data.userByDisplayName.livestream.topContributions)
+    this.getChannelInformationByDisplayName(displayName).then((result) => {
+      if (result) {
+        if (result.livestream !== null) {
+          const postData = JSON.stringify({
+            'operationName': 'TopContributors',
+            'variables': {
+              'displayname': displayName,
+              'first': amountToShow,
+              'rule': rule,
+              'queryStream': true
+            },
+            'query': 'query TopContributors($displayname: String!, $rule: ContributionSummaryRule, $first: Int, $after: String, $queryStream: Boolean!) {\n  userByDisplayName(displayname: $displayname) {\n    id\n    ...TopContributorsOfStreamerFrag @skip(if: $queryStream)\n    livestream @include(if: $queryStream) {\n      ...TopContributorsOfLivestreamFrag\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment TopContributorsOfStreamerFrag on User {\n  id\n  topContributions(rule: $rule, first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment VDliveNameFrag on User {\n  displayname\n  partnerStatus\n  __typename\n}\n\nfragment VDliveAvatarFrag on User {\n  avatar\n  __typename\n}\n\nfragment TopContributorsOfLivestreamFrag on Livestream {\n  id\n  topContributions(first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n'
           })
-        })
-      } else {
-        let postData = JSON.stringify({
-          'operationName': 'TopContributors',
-          'variables': {
-            'displayname': displayName,
-            'first': amountToShow,
-            'rule': rule,
-            'queryStream': false
-          },
-          'query': 'query TopContributors($displayname: String!, $rule: ContributionSummaryRule, $first: Int, $after: String, $queryStream: Boolean!) {\n  userByDisplayName(displayname: $displayname) {\n    id\n    ...TopContributorsOfStreamerFrag @skip(if: $queryStream)\n    livestream @include(if: $queryStream) {\n      ...TopContributorsOfLivestreamFrag\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment TopContributorsOfStreamerFrag on User {\n  id\n  topContributions(rule: $rule, first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment VDliveNameFrag on User {\n  displayname\n  partnerStatus\n  __typename\n}\n\nfragment VDliveAvatarFrag on User {\n  avatar\n  __typename\n}\n\nfragment TopContributorsOfLivestreamFrag on Livestream {\n  id\n  topContributions(first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n'
-        })
 
-        return new Promise((resolve, reject) => {
-          this.request(this.getAuthkey, postData).then((result) => {
-            result = JSON.parse(result)
-            result.errors !== undefined ? reject(result.errors['0'].message) : resolve(result.data.userByDisplayName.topContributions)
+          return new Promise((resolve, reject) => {
+            this.request(this.getAuthkey, postData).then((result) => {
+              result = JSON.parse(result)
+              result.errors !== undefined ? reject(result.errors['0'].message) : resolve(result.data.userByDisplayName.livestream.topContributions)
+            })
           })
-        })
+        } else {
+          const postData = JSON.stringify({
+            'operationName': 'TopContributors',
+            'variables': {
+              'displayname': displayName,
+              'first': amountToShow,
+              'rule': rule,
+              'queryStream': false
+            },
+            'query': 'query TopContributors($displayname: String!, $rule: ContributionSummaryRule, $first: Int, $after: String, $queryStream: Boolean!) {\n  userByDisplayName(displayname: $displayname) {\n    id\n    ...TopContributorsOfStreamerFrag @skip(if: $queryStream)\n    livestream @include(if: $queryStream) {\n      ...TopContributorsOfLivestreamFrag\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment TopContributorsOfStreamerFrag on User {\n  id\n  topContributions(rule: $rule, first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment VDliveNameFrag on User {\n  displayname\n  partnerStatus\n  __typename\n}\n\nfragment VDliveAvatarFrag on User {\n  avatar\n  __typename\n}\n\nfragment TopContributorsOfLivestreamFrag on Livestream {\n  id\n  topContributions(first: $first, after: $after) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    list {\n      amount\n      contributor {\n        id\n        ...VDliveNameFrag\n        ...VDliveAvatarFrag\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n'
+          })
+
+          return new Promise((resolve, reject) => {
+            this.request(this.getAuthkey, postData).then((result) => {
+              result = JSON.parse(result)
+              result.errors !== undefined ? reject(result.errors['0'].message) : resolve(result.data.userByDisplayName.topContributions)
+            })
+          })
+        }
       }
-    }));
+    })
   }
 }
 

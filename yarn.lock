@@ -263,13 +263,6 @@ diff@3.5.0:
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
   integrity sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==
 
-dlivetv-api@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/dlivetv-api/-/dlivetv-api-1.0.3.tgz#743e647a4a7623cfd2cbc74d88514385a84fba2f"
-  integrity sha512-jKVJofz8dBXNJ5GWeQ+kP8yKfGMStbLRlhcdFbgN3MFN2HOT2dKCQhDDnlKNh3m69IxGCpdFdClSElG/myBm4A==
-  dependencies:
-    websocket "^1.0.28"
-
 doctrine@1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-1.5.0.tgz#379dce730f6166f76cefa4e6707a159b02c5a6fa"

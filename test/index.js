@@ -2,11 +2,11 @@
 /* eslint-disable no-unused-vars */
 'use strict'
 
-const { Dliver } = require('../src')
-const { expect, should } = require('chai')
+const { Dlive } = require('../src')
+const { expect } = require('chai')
 const channelName = 'pdp'
 const authKey = 'abc'
-let channel = new Dliver(channelName, authKey)
+let channel = new Dlive(channelName, authKey)
 
 const main = async () => {
   describe('Validating values', function () {
@@ -22,6 +22,10 @@ const main = async () => {
 
       channel.getChannelViewers('pewdiepie').then(res => {
         expect(res).to.be.null()
+      }).catch(console.log)
+
+      channel.getChannelFollowers('sampepper', 20).then(res => {
+        console.log(res)
       }).catch(console.log)
     })
   })

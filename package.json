@@ -6,7 +6,6 @@
   "main": "./src/index.js",
   "dependencies": {
     "chai": "^4.2.0",
-    "dlivetv-api": "^1.0.3",
     "events": "^3.0.0",
     "https": "^1.0.0",
     "mocha": "^6.1.4",
@@ -28,6 +27,7 @@
   "author": "Nils Kleinert",
   "license": "MIT",
   "contributors": [
-    "Captien"
+    "Captien",
+    "Ikd70"
   ]
 }
