@@ -25,7 +25,7 @@ const coolDown = 3000 // 3 seconds
 
 // Parameter 1: Blockchain username
 // Parameter 2: Your access key for sending messages
-let example = new Dlive(blockchainName, accessKey) // Joining sampepper
+let example = new Dliver(blockchainName, accessKey) // Joining sampepper
 
 example.on('ChatText', (message) => {
   console.log(`Messages in Channel ${example.getChannel}: ${message.content}`)
